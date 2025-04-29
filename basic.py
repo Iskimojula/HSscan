@@ -957,7 +957,7 @@ def ellipsefun(image1_filepath,image2_filepath,radius,F,X,standard_spots_filepat
         #计算PV.
         # plot_zernike_wavefront(r_list)
         #计算球镜度，柱镜度数，轴向
-        M,J45,J180 = opt.calc_M_J45_J180(zlist,2.0)
+        M,J45,J180 = opt.calc_M_J45_J180(zlist,2.0,0,0)
         cyl,sph,theta = opt.calc_sph_cyl_theta(M,J45,J180)
         r_list.append(sph)
         r_list.append(cyl)
@@ -968,7 +968,7 @@ def ellipsefun(image1_filepath,image2_filepath,radius,F,X,standard_spots_filepat
         return r_list
     else:
         return [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-
+'''
 r=lvpyfun("black_1600_1200.bmp","+15.bmp",2,13.11878520128891,3.45,"DMM1600_1200交大校准数据.txt",4)          #画圆半径单位毫米，透镜阵列焦距单位毫米，一个像素几微米,标准点坐标
 #r=ellipsefun("black_1600_1200.bmp","+15.bmp",2,13.11878520128891,3.45,"DMM1600_1200交大校准数据.txt",4,1.0,1.0)
 zlist = r[:6]
@@ -977,10 +977,14 @@ M,J45,J180 = opt.calc_M_J45_J180(zlist,2.0)
 cyl,sph,theta = opt.calc_sph_cyl_theta(M,J45,J180)
 Mx,My = opt.calc_Mx_My(cyl,sph,-10)
 print(Mx,My)
-
+'''
 R = ellipsefun("black_1600_1200.bmp","+15.bmp",2,13.11878520128891,3.45,"DMM1600_1200交大校准数据.txt",4,0.6848514516134983,2.270720046422034)
-print(R)
 
+Z_list = R[:6]
+M_,J45_,J180_ = opt.calc_M_J45_J180(Z_list,2.0,0,15)
+CYL,SPH,THETA = opt.calc_sph_cyl_theta(M_,J45_,J180_)
+
+print(Z_list,M_,J45_,J180_, CYL,SPH,THETA)
 cv2.waitKey()
 cv2.destroyAllWindows()
 

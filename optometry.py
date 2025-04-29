@@ -2,12 +2,73 @@ import math
 import numpy as np
 def zernike(n,m):
     return int((n*(n+2)+m)/2)
-
+'''
 def calc_M_J45_J180(z_list,radius):
     M = -4*math.sqrt(3)*z_list[zernike(2,0)]
     J45 = -2*math.sqrt(6)*z_list[zernike(2,-2)]
     J180 = -2*math.sqrt(6)*z_list[zernike(2,2)]
     return M,J45,J180
+'''
+#修正公式,输入是角度,计算M,J45,J180
+def calc_M_J45_J180(z_list,radius,alpha,phy):
+    alpha = math.radians(alpha)
+    phy = math.radians(phy)
+
+    M = -(2*math.sqrt(3)*z_list[zernike(2,0)]*(math.pow(math.cos(phy),2)+1) + 
+          math.sqrt(6)*z_list[zernike(2,-2)]*math.sin(2*alpha)*math.pow(math.sin(phy),2) + 
+          math.sqrt(6)*z_list[zernike(2,2)]*math.cos(2*alpha)*math.pow(math.sin(phy),2)
+          )/math.pow((radius*math.cos(phy)),2)
+    
+    J45 = - (2*math.sqrt(3)*z_list[zernike(2,0)]*math.sin(2*alpha)*math.pow(math.sin(phy),2)+
+             math.sqrt(6)*z_list[zernike(2,-2)]*(2*math.pow(math.cos(2*alpha),2)*math.cos(phy)+ math.pow(math.sin(2*alpha),2)*(1+math.pow(math.cos(phy),2)))+
+             math.sqrt(6)*z_list[zernike(2,2)]*math.cos(2*alpha)*math.sin(2*alpha)*math.pow((1+math.cos(phy)),2)
+             )/math.pow((radius*math.cos(phy)),2)
+    
+    J180 = - (2*math.sqrt(3)*z_list[zernike(2,0)]*math.cos(2*alpha)*math.pow(math.sin(phy),2)+
+             math.sqrt(6)*z_list[zernike(2,-2)]*math.cos(2*alpha)*math.sin(2*alpha)*math.pow((1+math.cos(phy)),2)+
+             math.sqrt(6)*z_list[zernike(2,2)]*(math.pow(math.cos(2*alpha),2)*(math.pow(math.cos(phy),2)+1)+2*math.pow(math.sin(2*alpha),2)*math.cos(phy))
+             )/math.pow((radius*math.cos(phy)),2)
+    
+
+    return M,J45, J180
+
+#Thibos转换
+def algo_Thibos_line(z_list,k):
+    c_list = []
+    c_list.append(z_list[zernike(0,0)])
+    c_list.append(z_list[zernike(1,-1)])
+    c_list.append(z_list[zernike(1,1)])
+
+    
+    c_list.append( (k)*z_list[zernike(2,-2)])
+    c_list.append( (k*k+1)*z_list[zernike(2,0)]/2 + math.sqrt(2)*(k*k-1)*z_list[zernike(2,2)]/4)
+    c_list.append( math.sqrt(2)*(k*k-1)*z_list[zernike(2,0)]/2 + (k*k+1)*z_list[zernike(2,2)]/2)
+
+    return c_list
+
+def algo_Thibos_mat(z_list,k):
+    clist = np.zeros_like(z_list)
+    M = [
+        [1,0,0,0,-math.sqrt(3),0],
+        [0,0,2,0,0,0],
+        [0,2,0,0,0,0],
+        [0,0,0,0,2*math.sqrt(3),math.sqrt(6)],
+        [0,0,0,2*math.sqrt(6),0,0],
+        [0,0,0,0,2*math.sqrt(3),-math.sqrt(6)]
+    ]
+
+    N = [
+        [1,0,0,0,-math.sqrt(3),0],
+        [0,0,2*k,0,0,0],
+        [0,2,0,0,0,0],
+        [0,0,0,0,2*math.sqrt(3)*k*k,math.sqrt(6)*k*k],
+        [0,0,0,2*math.sqrt(6)*k,0,0],
+        [0,0,0,0,2*math.sqrt(3),-math.sqrt(6)]
+    ]
+
+    clist = np.dot(np.dot(np.linalg.inv(np.array(N)),np.array(M)),np.transpose(z_list))
+    return np.transpose(clist).tolist()
+
 
 def calc_sph_cyl_theta(M,J45,J180):
     cyl = -2*math.sqrt(J180*J180+J45*J45)
