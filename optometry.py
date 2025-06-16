@@ -1,14 +1,29 @@
 import math
 import numpy as np
+import yaml
 def zernike(n,m):
     return int((n*(n+2)+m)/2)
-'''
-def calc_M_J45_J180(z_list,radius):
-    M = -4*math.sqrt(3)*z_list[zernike(2,0)]
-    J45 = -2*math.sqrt(6)*z_list[zernike(2,-2)]
-    J180 = -2*math.sqrt(6)*z_list[zernike(2,2)]
-    return M,J45,J180
-'''
+
+def get_angelstr(angle_num):
+    if angle_num == 0:
+        return 'init'
+    if angle_num < 0:
+        return 'minus'+ str(int(math.fabs(angle_num)))
+    if angle_num > 0:
+        return 'positive' + str(int(math.fabs(angle_num)))
+
+def get_initaberration(dir,angle):
+    with open("intrinsic_aberration.yaml","r",encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+    
+    return list(map(float,config[dir][get_angelstr(angle)]))
+
+def calc_M_J45_J180_noatchson(z_list,radius):
+    M = -4*math.sqrt(3)*z_list[zernike(2,0)]*0.85
+    J45 = -2*math.sqrt(6)*z_list[zernike(2,-2)]*0.85
+    J180 = -2*math.sqrt(6)*z_list[zernike(2,2)]*0.85
+    return M/(radius*radius),J45/(radius*radius),J180/(radius*radius)
+
 #修正公式,输入是角度,计算M,J45,J180
 def calc_M_J45_J180(z_list,radius,alpha,phy):
     alpha = math.radians(alpha)
@@ -31,6 +46,29 @@ def calc_M_J45_J180(z_list,radius,alpha,phy):
     
 
     return M,J45, J180
+
+#自推导的椭圆修正公式
+#@arg 1: z_list 出瞳处的Zernike系数
+#@arg 2: Ms、Mt 水平、数值方向的放大倍率
+#@arg 2: ri、ro 入瞳、出瞳半径
+def algo_elli_correction(z_list,Ms,Mt,ri,ro):
+    c_list = []
+    c_list.append(z_list[zernike(0,0)])
+    c_list.append(z_list[zernike(1,-1)])
+    c_list.append(z_list[zernike(1,1)])
+
+    ratio = (ri/ro)*(ri/ro)
+    A = (1/(Ms*Ms)+1/(Mt*Mt))
+    B = (1/(Ms*Ms)-1/(Mt*Mt))
+    #计算Z(2,-2)
+    c_list.append(ratio*(z_list[zernike(2,-2)]/(Ms*Mt)))
+    #计算Z(2,0)
+    c_list.append(ratio*( A*z_list[zernike(2,0)]/2 + math.sqrt(2)*B*z_list[zernike(2,2)]/4))
+    #计算Z(2,2)
+    c_list.append(ratio*( math.sqrt(2)*B*z_list[zernike(2,0)]/2 + A*z_list[zernike(2,2)]/2))
+    return c_list
+
+    
 
 #Thibos转换
 def algo_Thibos_line(z_list,k):
@@ -73,7 +111,7 @@ def algo_Thibos_mat(z_list,k):
 def calc_sph_cyl_theta(M,J45,J180):
     cyl = -2*math.sqrt(J180*J180+J45*J45)
     sph = M - cyl/2
-    theta = math.degrees(math.atan2(J45,J180)/2) #角度
+    theta = 0.5*math.degrees(math.atan2(J45,J180)) #角度
     if J180 < 0:
         theta = theta + 90
     
