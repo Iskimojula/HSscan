@@ -1,6 +1,11 @@
 import math
 import numpy as np
 import yaml
+
+def printversion():
+    print()
+    print("****** opo algo *******")
+    print()
 def zernike(n,m):
     return int((n*(n+2)+m)/2)
 
@@ -13,7 +18,7 @@ def get_angelstr(angle_num):
         return 'positive' + str(int(math.fabs(angle_num)))
 
 def get_initaberration(dir,angle):
-    with open("intrinsic_aberration.yaml","r",encoding="utf-8") as f:
+    with open("D:\\PycharmProjects\\pythonProject\\HSscan\\intrinsic_aberration.yaml","r",encoding="utf-8") as f:
         config = yaml.safe_load(f)
     
     return list(map(float,config[dir][get_angelstr(angle)]))
@@ -286,3 +291,10 @@ def calc_D(no_standard_points,radius,n,center,Mx,My):
     # 计算D矩阵
     D = calc_D_matrix(coordinates,n)
     return D
+
+
+def initaberration_correction(z_ist_with_initaber,dir = 0, angle = 0):
+    init_aber = get_initaberration(dir,angle)
+    z_list_out_initaber = [x-y for x,y in zip(z_ist_with_initaber,init_aber)]
+
+    return z_list_out_initaber
